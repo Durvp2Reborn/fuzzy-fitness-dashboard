@@ -1,25 +1,7 @@
 """Fuzzy logic macro calculator."""
 import numpy as np
 
-
-def trimf(x: float, params: list) -> float:
-    """
-    Calculate triangular membership function value.
-    
-    Args:
-        x: Input value
-        params: [a, b, c] where a is left foot, b is peak, c is right foot
-    
-    Returns:
-        Membership value between 0 and 1
-    """
-    a, b, c = params
-    if x <= a or x >= c:
-        return 0.0
-    elif a < x <= b:
-        return (x - a) / (b - a) if b != a else 1.0
-    else:  # b < x < c
-        return (c - x) / (c - b) if c != b else 1.0
+from app.fuzzy_engine.utils import trimf
 
 
 def calculate_nutrition(
@@ -69,7 +51,8 @@ def calculate_nutrition(
     
     # Apply fuzzy metabolism adjustment
     metabolism_mult = 0.9 * slow_deg + 1.0 * normal_deg + 1.1 * fast_deg
-    if metabolism_mult == 0:
+    # Use epsilon for floating-point comparison to avoid precision issues
+    if abs(metabolism_mult) < 1e-9:
         metabolism_mult = 1.0
     
     # Calculate TDEE

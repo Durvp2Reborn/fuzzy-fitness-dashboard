@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import ReadinessCard from '../components/ReadinessCard';
 import BodyCompCard from '../components/BodyCompCard';
@@ -19,36 +19,14 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [goal, setGoal] = useState('maintain');
 
-  // Load saved data from localStorage on mount
-  useEffect(() => {
-    const loadSavedData = () => {
-      try {
-        const savedInputs = localStorage.getItem('fitnessInputs');
-        if (savedInputs) {
-          const inputs = JSON.parse(savedInputs);
-          setGoal(inputs.nutrition?.goal || 'maintain');
-          fetchAllData(inputs);
-        } else {
-          // Use default demo data
-          fetchAllData(getDefaultInputs());
-        }
-      } catch (err) {
-        console.error('Error loading saved data:', err);
-        fetchAllData(getDefaultInputs());
-      }
-    };
-
-    loadSavedData();
-  }, []);
-
-  const getDefaultInputs = () => ({
+  const getDefaultInputs = useCallback(() => ({
     readiness: { sleep: 7, energy: 6, soreness: 4, stress: 3 },
     bodyComp: { weight: 75, height: 175, waist: 82, activity_level: 'moderate', build_type: 'mesomorph' },
     strength: { weight_lifted: 100, reps: '6', rpe: 8, form_quality: 'good' },
     nutrition: { weight: 75, goal: 'maintain', activity_level: 'moderate', metabolism: 'normal', adherence: 0.7 }
-  });
+  }), []);
 
-  const fetchAllData = async (inputs) => {
+  const fetchAllData = useCallback(async (inputs) => {
     setLoading(true);
     setError(null);
 
@@ -71,7 +49,29 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Load saved data from localStorage on mount
+  useEffect(() => {
+    const loadSavedData = () => {
+      try {
+        const savedInputs = localStorage.getItem('fitnessInputs');
+        if (savedInputs) {
+          const inputs = JSON.parse(savedInputs);
+          setGoal(inputs.nutrition?.goal || 'maintain');
+          fetchAllData(inputs);
+        } else {
+          // Use default demo data
+          fetchAllData(getDefaultInputs());
+        }
+      } catch (err) {
+        console.error('Error loading saved data:', err);
+        fetchAllData(getDefaultInputs());
+      }
+    };
+
+    loadSavedData();
+  }, [fetchAllData, getDefaultInputs]);
 
   if (loading) {
     return (
